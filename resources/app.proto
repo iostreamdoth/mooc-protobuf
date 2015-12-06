@@ -1,4 +1,4 @@
-syntax = "proto2";
+
 option optimize_for = SPEED;
 option java_package = "poke.comm";
 
@@ -174,6 +174,7 @@ message RoutingPath {
 
 message Header {  
     required Routing routing_id = 1;
+    //This is our Client Id
     required int32 originator = 2;
     optional string tag = 3;
     optional int64 time = 4;
@@ -200,11 +201,24 @@ message Header {
         JOBS = 4;
         REPORTS = 10;
         MANAGE = 100;
+        REGISTER = 5;
+        FORWARD = 6;
         }
+
+    //check if cluster message or client msg
+
+}
+
+
+
+message ClusterMessage{
+  optional ClientMessage client_message = 1;
+  optional int32 cluster_id=2;
 }
 
 // these are commands from external (and possible internal) clients
 // TODO: this needs to be moved to its own .proto
+
 message Payload {
     // requests & replies
     optional Ping ping = 1;
@@ -212,16 +226,85 @@ message Payload {
     // requests only
     optional NameSpaceOperation space_op = 2;
     optional JobOperation job_op = 3;
-  
+
     // replies only
     optional JobStatus job_status = 13;
     optional NameSpaceStatus space_status = 12;
-   
-    // TBD
-    // reports
+
+   	optional ClientMessage client_message = 5;
+    optional ClusterMessage cluster_message = 4;
+    optional string result = 6;
+
+}
+
+message ClientMessage{
+  optional string clusterConfigFile = 11;
+  optional string host = 12;
+  optional int32 port = 13;
+  optional string clusterid = 15;
+  optional int32 nodeid = 14;
+  optional string msgId = 1;
+  optional int32 senderId = 2;
+  optional int32 clientId = 10;
+  optional int32 receiverId = 3;
+  optional Details details = 4;
+  optional Functionalities functionality = 5;
+  optional MessageType messageType = 6;
+  optional RequestType requestType = 7;
+  optional Requester cameFrom = 9;
+  optional bool broadcastInternal = 8 [default = false];
+    enum MessageType
+    {
+       REQUEST = 0;
+       SUCCESS = 1;
+       REPLICATION = 2;
+       OTHERCLUSTER = 3;
+       REPLICATIONLOCAL = 4;
+       REPLICATIONCLUSTER = 5;
+       CLIENT_REQUEST = 6;
+       LEADERNODE = 7;
+       FOLLOWERNODE = 8;
+       CLIENTRESPONSE = 9;
+    }
+    enum RequestType
+    {
+       GET = 0;
+       POST = 1;
+    }
+    enum Requester{
+    	LEADER = 1;
+    	CLIENT = 2;
+    	FOLLOWER = 3;
+    	REGISTER = 4;
+    }
+    enum Functionalities
+    {
+       GETSUSER = 1;
+       GETCOURSEDESCRIPTION = 2;
+       ADDUSER = 3;
+       ADDCOURSE = 4;
+       ADDCOURSETOUSER = 5;
+       REGISTERCLIENT = 6;
+    }
+}
+
+message Details{
+   optional int32 user_id = 1;
+   optional string username = 2;
+   optional int32 course_id = 3;
+   optional string course_name = 4;
+   optional string course_description = 5;
+}
+
+message JoinMessage {
+    optional int32 from_node_id = 1;
+    optional int32 to_node_id = 2;
+    optional int32 from_cluster_id = 3;
+    optional int32 to_cluster_id = 4;
 }
 
 message Request {
-    required Header header = 1;
-    required Payload body = 2;
+    optional Header header = 1;
+    optional Payload body = 2;
+    optional JoinMessage join_message = 3;
 }
